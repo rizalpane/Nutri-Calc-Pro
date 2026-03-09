@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NutriCalc Pro - Database TKPI Lengkap</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap');
+        body { font-family: 'Inter', sans-serif; background-color: #f1f5f9; }
+        .glass-card { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px); border: 1px solid rgba(226, 232, 240, 1); }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .category-badge { font-size: 0.65rem; padding: 2px 6px; border-radius: 4px; font-weight: bold; text-transform: uppercase; }
+    </style>
+</head>
+<body class="p-4 md:p-8">
+    <div class="max-w-7xl mx-auto">
+        <!-- Header -->
+        <header class="mb-8 flex flex-col md:flex-row justify-between items-center gap-4">
+            <div>
+                <h1 class="text-3xl font-bold text-emerald-800">NutriCalc Pro 🌿</h1>
+                <p class="text-slate-500 italic text-sm text-center md:text-left">Database Gizi Terpadu (Serealia, Daging, Susu, Bumbu & Buah)</p>
+            </div>
+            <div class="flex gap-2">
+                <button onclick="exportToExcel()" class="flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white px-5 py-2.5 rounded-xl transition-all shadow-lg active:scale-95">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>
+                    Simpan Laporan (Excel)
+                </button>
+            </div>
+        </header>
+
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+            <!-- Sidebar: Search & Config -->
+            <div class="lg:col-span-4 space-y-6">
+                <!-- Search Box -->
+                <div class="glass-card p-6 rounded-3xl shadow-sm">
+                    <h2 class="text-lg font-semibold mb-4 text-slate-800 flex items-center gap-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+                        Cari Bahan Makanan
+                    </h2>
+                    <div class="relative">
+                        <input type="text" id="search-input" placeholder="Ketik nama bahan (ex: Susu, Jahe, Bebek)..." 
+                               class="w-full p-4 pr-12 border border-slate-200 rounded-2xl focus:ring-2 focus:ring-emerald-500 outline-none transition-all shadow-inner">
+                    </div>
+                    
+                    <div id="search-results" class="mt-4 max-h-[500px] overflow-y-auto space-y-2 pr-2 custom-scrollbar">
+                        <p class="text-sm text-slate-400 italic text-center py-4">Masukkan minimal 2 karakter untuk melihat hasil database lengkap.</p>
+                    </div>
+                </div>
+
+                <!-- Portion Config -->
+                <div class="glass-card p-6 rounded-3xl shadow-sm">
+                    <h2 class="text-lg font-semibold mb-4 text-slate-800">Konfigurasi Porsi</h2>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="p-3 bg-blue-50 rounded-2xl">
+                            <label class="block text-[10px] font-bold text-blue-600 uppercase mb-1">Porsi Besar (g)</label>
+                            <input type="number" id="porsi-besar-weight" value="300" class="w-full bg-transparent text-lg font-bold text-blue-900 outline-none">
+                        </div>
+                        <div class="p-3 bg-amber-50 rounded-2xl">
+                            <label class="block text-[10px] font-bold text-amber-600 uppercase mb-1">Porsi Kecil (g)</label>
+                            <input type="number" id="porsi-kecil-weight" value="150" class="w-full bg-transparent text-lg font-bold text-amber-900 outline-none">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Main Content: Calculation Table -->
+            <div class="lg:col-span-8 space-y-6">
+                <div class="glass-card p-6 rounded-3xl shadow-sm overflow-hidden min-h-[400px]">
+                    <h2 class="text-xl font-bold text-slate-800 mb-6 flex items-center gap-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" /></svg>
+                        Analisis Bahan Resep
+                    </h2>
+
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left border-separate border-spacing-y-2">
+                            <thead>
+                                <tr class="text-slate-400 text-[10px] uppercase font-bold tracking-widest px-4">
+                                    <th class="pb-2 pl-4">Bahan</th>
+                                    <th class="pb-2 text-center">Berat(g)</th>
+                                    <th class="pb-2 text-center">BDD%</th>
+                                    <th class="pb-2 text-center">Susut%</th>
+                                    <th class="pb-2 text-right">Energi</th>
+                                    <th class="pb-2 text-right">Prot</th>
+                                    <th class="pb-2 text-right">Lemak</th>
+                                    <th class="pb-2 text-right">KH</th>
+                                    <th class="pb-2 text-right pr-4">Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody id="recipe-body">
+                                <!-- Dynamic Rows -->
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <div id="empty-state" class="flex flex-col items-center justify-center py-20 opacity-40">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                        </svg>
+                        <p class="mt-4 font-medium text-lg italic">Belum ada bahan yang dipilih</p>
+                    </div>
+
+                    <!-- Visual Summary Cards -->
+                    <div id="summary-section" class="mt-10 grid grid-cols-1 md:grid-cols-3 gap-6 opacity-0 translate-y-4 transition-all duration-500">
+                        <!-- Total -->
+                        <div class="p-5 bg-slate-900 text-white rounded-3xl shadow-xl">
+                            <div class="flex justify-between items-start mb-4">
+                                <span class="text-[10px] font-bold uppercase tracking-widest text-slate-400">Total Keseluruhan</span>
+                                <div class="bg-emerald-500 p-1 rounded-lg"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg></div>
+                            </div>
+                            <div id="total-val" class="space-y-1"></div>
+                        </div>
+                        <!-- Porsi Besar -->
+                        <div class="p-5 bg-blue-600 text-white rounded-3xl shadow-xl">
+                            <div class="flex justify-between items-start mb-4">
+                                <span class="text-[10px] font-bold uppercase tracking-widest text-blue-200">Per Porsi Besar</span>
+                                <div class="bg-blue-400 p-1 rounded-lg"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg></div>
+                            </div>
+                            <div id="large-val" class="space-y-1"></div>
+                        </div>
+                        <!-- Porsi Kecil -->
+                        <div class="p-5 bg-amber-500 text-white rounded-3xl shadow-xl">
+                            <div class="flex justify-between items-start mb-4">
+                                <span class="text-[10px] font-bold uppercase tracking-widest text-amber-100">Per Porsi Kecil</span>
+                                <div class="bg-amber-400 p-1 rounded-lg"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" /></svg></div>
+                            </div>
+                            <div id="small-val" class="space-y-1"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast -->
+    <div id="notification" class="fixed bottom-6 left-1/2 -translate-x-1/2 opacity-0 transform translate-y-10 transition-all duration-300 z-50 pointer-events-none">
+        <div class="bg-slate-900 text-white px-8 py-3 rounded-full shadow-2xl flex items-center gap-3 border border-slate-700">
+            <span class="text-emerald-400 font-bold">✓</span>
+            <span id="notif-text" class="text-sm font-medium">Bahan ditambahkan</span>
+        </div>
+    </div>
+
+    <script>
+        /**
+         * Database TKPI Terintegrasi (Lengkap)
+         * Data gizi per 100 gram (Energi dlm kkal, Gizi dlm gram)
+         */
+        const tkpiData = [
+            // BUMBU & REMPAH
+            { id: 101, category: "Bumbu", name: "Bawang Merah", energy: 39, protein: 1.5, fat: 0.3, carb: 9.2, bdd: 90 },
+            { id: 102, category: "Bumbu", name: "Bawang Putih", energy: 95, protein: 4.5, fat: 0.2, carb: 23.1, bdd: 88 },
+            { id: 103, category: "Bumbu", name: "Cabai Merah Besar", energy: 31, protein: 1.0, fat: 0.3, carb: 7.3, bdd: 85 },
+            { id: 104, category: "Bumbu", name: "Cabai Rawit", energy: 103, protein: 4.7, fat: 2.4, carb: 19.9, bdd: 85 },
+            { id: 105, category: "Bumbu", name: "Jahe", energy: 51, protein: 1.5, fat: 1.0, carb: 10.1, bdd: 80 },
+            { id: 106, category: "Bumbu", name: "Kunyit", energy: 63, protein: 2.0, fat: 1.5, carb: 10.5, bdd: 80 },
+            { id: 107, category: "Bumbu", name: "Ketumbar Bijian", energy: 404, protein: 14.1, fat: 16.1, carb: 54.2, bdd: 100 },
+            { id: 108, category: "Bumbu", name: "Merica (Lada Putih)", energy: 359, protein: 11.5, fat: 6.8, carb: 64.4, bdd: 100 },
+            { id: 109, category: "Bumbu", name: "Garam Dapur", energy: 0, protein: 0, fat: 0, carb: 0, bdd: 100 },
+            { id: 110, category: "Bumbu", name: "Terasi Udang", energy: 155, protein: 22.3, fat: 2.9, carb: 9.9, bdd: 100 },
+
+            // SUSU & OLAHAN (Merk & Tipe)
+            { id: 201, category: "Susu", name: "Susu Sapi Segar", energy: 61, protein: 3.2, fat: 3.5, carb: 4.3, bdd: 100 },
+            { id: 202, category: "Susu", name: "Susu Kental Manis", energy: 336, protein: 8.2, fat: 10.0, carb: 55.0, bdd: 100 },
+            { id: 203, category: "Susu", name: "Susu Bubuk Full Cream", energy: 509, protein: 24.6, fat: 27.0, carb: 42.0, bdd: 100 },
+            { id: 204, category: "Susu", name: "Susu Bubuk Skim", energy: 362, protein: 35.6, fat: 1.0, carb: 52.0, bdd: 100 },
+            { id: 205, category: "Susu", name: "Keju Cheddar", energy: 326, protein: 22.8, fat: 20.3, carb: 13.1, bdd: 100 },
+            { id: 206, category: "Susu", name: "Yogurt Plain", energy: 52, protein: 3.3, fat: 2.5, carb: 4.0, bdd: 100 },
+            { id: 207, category: "Susu", name: "Susu UHT Full Cream (Merk Umum)", energy: 60, protein: 3.0, fat: 3.0, carb: 5.0, bdd: 100 },
+
+            // DAGING & UNGGAS
+            { id: 301, category: "Daging", name: "Daging Sapi Lemak Sedang", energy: 249, protein: 17.5, fat: 19.1, carb: 0, bdd: 100 },
+            { id: 302, category: "Daging", name: "Daging Kambing", energy: 154, protein: 16.6, fat: 9.2, carb: 0, bdd: 100 },
+            { id: 303, category: "Unggas", name: "Daging Ayam (dengan Kulit)", energy: 298, protein: 18.2, fat: 25.0, carb: 0, bdd: 58 },
+            { id: 304, category: "Unggas", name: "Dada Ayam (Tanpa Kulit)", energy: 150, protein: 25.0, fat: 3.0, carb: 0, bdd: 100 },
+            { id: 305, category: "Unggas", name: "Daging Bebek/Itik", energy: 326, protein: 16.0, fat: 28.6, carb: 0, bdd: 60 },
+            { id: 306, category: "Unggas", name: "Hati Ayam", energy: 128, protein: 16.8, fat: 4.8, carb: 2.8, bdd: 100 },
+            { id: 307, category: "Daging", name: "Daging Kerbau", energy: 79, protein: 18.7, fat: 0.5, carb: 0, bdd: 100 },
+
+            // IKAN & BIOTA AIR
+            { id: 401, category: "Ikan", name: "Ikan Kembung", energy: 103, protein: 21.4, fat: 1.2, carb: 0, bdd: 80 },
+            { id: 402, category: "Ikan", name: "Ikan Mujair", energy: 89, protein: 18.7, fat: 1.0, carb: 0, bdd: 80 },
+            { id: 403, category: "Ikan", name: "Ikan Tongkol", energy: 111, protein: 24.0, fat: 1.0, carb: 0, bdd: 90 },
+            { id: 404, category: "Ikan", name: "Ikan Salmon", energy: 142, protein: 19.8, fat: 6.3, carb: 0, bdd: 100 },
+            { id: 405, category: "Ikan", name: "Udang Segar", energy: 91, protein: 21.0, fat: 0.2, carb: 0.1, bdd: 68 },
+            { id: 406, category: "Ikan", name: "Cumi-cumi", energy: 75, protein: 16.1, fat: 0.7, carb: 0.1, bdd: 100 },
+            { id: 407, category: "Ikan", name: "Kepiting Segar", energy: 151, protein: 13.8, fat: 3.8, carb: 14.1, bdd: 45 },
+
+            // SEREALIA & TEPUNG
+            { id: 501, category: "Serealia", name: "Beras Giling Putih", energy: 357, protein: 8.4, fat: 1.7, carb: 77.1, bdd: 100 },
+            { id: 502, category: "Serealia", name: "Tepung Terigu", energy: 365, protein: 10.3, fat: 1.0, carb: 77.3, bdd: 100 },
+            { id: 503, category: "Serealia", name: "Tepung Tapioka", energy: 362, protein: 0.5, fat: 0.3, carb: 86.9, bdd: 100 },
+            { id: 504, category: "Serealia", name: "Tepung Maizena", energy: 341, protein: 0.3, fat: 0, carb: 85.0, bdd: 100 },
+            { id: 505, category: "Serealia", name: "Mi Basah", energy: 86, protein: 0.6, fat: 3.3, carb: 14.0, bdd: 100 },
+
+            // BUAH-BUAHAN
+            { id: 601, category: "Buah", name: "Alpukat", energy: 85, protein: 0.9, fat: 6.5, carb: 7.7, bdd: 61 },
+            { id: 602, category: "Buah", name: "Apel Segar", energy: 58, protein: 0.3, fat: 0.4, carb: 14.9, bdd: 88 },
+            { id: 603, category: "Buah", name: "Mangga Harum Manis", energy: 46, protein: 0.4, fat: 0.2, carb: 11.9, bdd: 65 },
+            { id: 604, category: "Buah", name: "Pisang Raja", energy: 120, protein: 1.2, fat: 0.2, carb: 31.8, bdd: 70 },
+            { id: 605, category: "Buah", name: "Jeruk Manis", energy: 45, protein: 0.9, fat: 0.2, carb: 11.2, bdd: 71 },
+            { id: 606, category: "Buah", name: "Durian", energy: 134, protein: 2.5, fat: 3.0, carb: 28.0, bdd: 22 },
+            { id: 607, category: "Buah", name: "Nanas", energy: 52, protein: 0.4, fat: 0.2, carb: 13.7, bdd: 53 }
+        ];
+
+        let recipe = [];
+
+        // Elements
+        const searchInput = document.getElementById('search-input');
+        const searchResults = document.getElementById('search-results');
+        const recipeBody = document.getElementById('recipe-body');
+        const emptyState = document.getElementById('empty-state');
+        const summarySection = document.getElementById('summary-section');
+        const porsiBesarInput = document.getElementById('porsi-besar-weight');
+        const porsiKecilInput = document.getElementById('porsi-kecil-weight');
+
+        // Logic Pencarian
+        searchInput.addEventListener('input', (e) => {
+            const val = e.target.value.toLowerCase().trim();
+            if (val.length < 2) {
+                searchResults.innerHTML = '<p class="text-sm text-slate-400 italic text-center py-4">Masukkan minimal 2 karakter...</p>';
+                return;
+            }
+
+            const filtered = tkpiData.filter(item => 
+                item.name.toLowerCase().includes(val) || 
+                item.category.toLowerCase().includes(val)
+            );
+            
+            if (filtered.length === 0) {
+                searchResults.innerHTML = '<p class="text-sm text-red-400 text-center py-4">Bahan tidak ditemukan dalam database.</p>';
+                return;
+            }
+
+            searchResults.innerHTML = filtered.map(item => `
+                <div class="flex justify-between items-center p-4 border border-slate-100 rounded-2xl hover:bg-emerald-50 cursor-pointer transition-all group shadow-sm bg-white" 
+                     onclick="addToRecipe(${item.id})">
+                    <div class="flex-1">
+                        <div class="flex items-center gap-2 mb-1">
+                            <span class="category-badge ${getCategoryColor(item.category)} text-white">${item.category}</span>
+                            <p class="font-bold text-slate-700">${item.name}</p>
+                        </div>
+                        <div class="flex gap-4 text-[10px] text-slate-400 font-medium">
+                            <span>E: ${item.energy}</span>
+                            <span>P: ${item.protein}g</span>
+                            <span>L: ${item.fat}g</span>
+                            <span>KH: ${item.carb}g</span>
+                        </div>
+                    </div>
+                    <div class="w-8 h-8 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-600 opacity-0 group-hover:opacity-100 transition-all">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M12 6v6m0 0l-3-3m3 3l3-3" /></svg>
+                    </div>
+                </div>
+            `).join('');
+        });
+
+        function getCategoryColor(cat) {
+            switch(cat) {
+                case 'Bumbu': return 'bg-amber-500';
+                case 'Susu': return 'bg-blue-400';
+                case 'Daging': return 'bg-red-600';
+                case 'Unggas': return 'bg-orange-400';
+                case 'Ikan': return 'bg-cyan-500';
+                case 'Serealia': return 'bg-yellow-600';
+                case 'Buah': return 'bg-emerald-500';
+                default: return 'bg-slate-400';
+            }
+        }
+
+        function addToRecipe(id) {
+            const baseItem = tkpiData.find(i => i.id === id);
+            const newItem = {
+                ...baseItem,
+                recipeId: Date.now(),
+                weight: 100,
+                shrinkage: 0 
+            };
+            recipe.push(newItem);
+            renderRecipe();
+            showNotification(`${baseItem.name} ditambahkan!`);
+        }
+
+        function removeIngredient(recipeId) {
+            recipe = recipe.filter(i => i.recipeId !== recipeId);
+            renderRecipe();
+        }
+
+        function updateIngredient(recipeId, field, value) {
+            const index = recipe.findIndex(i => i.recipeId === recipeId);
+            if (index !== -1) {
+                recipe[index][field] = parseFloat(value) || 0;
+                renderRecipe();
+            }
+        }
+
+        function calculateNutrients() {
+            let totals = { energy: 0, protein: 0, fat: 0, carb: 0, rawWeight: 0, cookedWeight: 0 };
+            
+            recipe.forEach(item => {
+                const bddFactor = item.bdd / 100;
+                const shrinkFactor = (100 - item.shrinkage) / 100;
+                
+                // Nutrisi dihitung dari Berat Mentah * Faktor BDD
+                const edibleWeight = item.weight * bddFactor;
+                
+                totals.energy += (item.energy / 100) * edibleWeight;
+                totals.protein += (item.protein / 100) * edibleWeight;
+                totals.fat += (item.fat / 100) * edibleWeight;
+                totals.carb += (item.carb / 100) * edibleWeight;
+                
+                // Berat akhir (Matang) memperhitungkan penyusutan
+                totals.rawWeight += item.weight;
+                totals.cookedWeight += item.weight * shrinkFactor;
+            });
+
+            return totals;
+        }
+
+        function renderRecipe() {
+            if (recipe.length === 0) {
+                recipeBody.innerHTML = '';
+                emptyState.style.display = 'flex';
+                summarySection.classList.add('opacity-0', 'translate-y-4');
+                return;
+            }
+
+            emptyState.style.display = 'none';
+            summarySection.classList.remove('opacity-0', 'translate-y-4');
+
+            recipeBody.innerHTML = recipe.map(item => {
+                const bddW = item.weight * (item.bdd / 100);
+                const e = ((item.energy/100) * bddW).toFixed(1);
+                const p = ((item.protein/100) * bddW).toFixed(1);
+                const l = ((item.fat/100) * bddW).toFixed(1);
+                const k = ((item.carb/100) * bddW).toFixed(1);
+
+                return `
+                <tr class="bg-white hover:bg-slate-50 transition-colors shadow-sm rounded-2xl overflow-hidden">
+                    <td class="p-4 rounded-l-2xl">
+                        <p class="font-bold text-slate-700">${item.name}</p>
+                        <p class="text-[9px] text-slate-400 uppercase tracking-tighter">${item.category}</p>
+                    </td>
+                    <td class="p-4 text-center">
+                        <input type="number" value="${item.weight}" onchange="updateIngredient(${item.recipeId}, 'weight', this.value)" 
+                               class="w-16 p-1 bg-slate-100 rounded-lg text-center font-bold text-slate-700 outline-emerald-500">
+                    </td>
+                    <td class="p-4 text-center text-xs text-slate-500">${item.bdd}%</td>
+                    <td class="p-4 text-center">
+                        <input type="number" value="${item.shrinkage}" onchange="updateIngredient(${item.recipeId}, 'shrinkage', this.value)" 
+                               class="w-12 p-1 bg-slate-50 rounded text-center text-xs outline-blue-500">
+                    </td>
+                    <td class="p-4 text-right font-mono text-emerald-600 font-bold">${e}</td>
+                    <td class="p-4 text-right font-mono text-slate-600">${p}</td>
+                    <td class="p-4 text-right font-mono text-slate-600">${l}</td>
+                    <td class="p-4 text-right font-mono text-slate-600">${k}</td>
+                    <td class="p-4 text-right rounded-r-2xl">
+                        <button onclick="removeIngredient(${item.recipeId})" class="p-2 hover:bg-red-50 text-slate-300 hover:text-red-500 rounded-xl transition-all">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                        </button>
+                    </td>
+                </tr>
+            `}).join('');
+
+            updateSummary();
+        }
+
+        function updateSummary() {
+            const totals = calculateNutrients();
+            const wLarge = parseFloat(porsiBesarInput.value) || 1;
+            const wSmall = parseFloat(porsiKecilInput.value) || 1;
+
+            const renderVals = (containerId, data, portionWeight) => {
+                // Ratio calculation: Portion Weight / Total Cooked Weight
+                const ratio = portionWeight ? (portionWeight / totals.cookedWeight) : 1;
+                const format = (v) => (v * ratio).toLocaleString('id-ID', { maximumFractionDigits: 1 });
+
+                document.getElementById(containerId).innerHTML = `
+                    <div class="grid grid-cols-2 gap-2 text-sm">
+                        <div class="opacity-80">Energi</div><div class="text-right font-bold">${format(data.energy)} kkal</div>
+                        <div class="opacity-80">Protein</div><div class="text-right font-bold">${format(data.protein)}g</div>
+                        <div class="opacity-80">Lemak</div><div class="text-right font-bold">${format(data.fat)}g</div>
+                        <div class="opacity-80">Karbo</div><div class="text-right font-bold">${format(data.carb)}g</div>
+                    </div>
+                `;
+            };
+
+            renderVals('total-val', totals, null);
+            renderVals('large-val', totals, wLarge);
+            renderVals('small-val', totals, wSmall);
+        }
+
+        porsiBesarInput.oninput = updateSummary;
+        porsiKecilInput.oninput = updateSummary;
+
+        function showNotification(text) {
+            const notif = document.getElementById('notification');
+            document.getElementById('notif-text').innerText = text;
+            notif.classList.remove('opacity-0', 'translate-y-10');
+            setTimeout(() => notif.classList.add('opacity-0', 'translate-y-10'), 3000);
+        }
+
+        function exportToExcel() {
+            if (recipe.length === 0) return;
+            const totals = calculateNutrients();
+            const wL = parseFloat(porsiBesarInput.value) || 0;
+            const wS = parseFloat(porsiKecilInput.value) || 0;
+
+            let csv = "LAPORAN ANALISIS GIZI RESEP (TKPI)\n\n";
+            csv += "Bahan,Kategori,Berat Mentah(g),BDD(%),Penyusutan(%),Energi(kkal),Protein(g),Lemak(g),KH(g)\n";
+            
+            recipe.forEach(i => {
+                const bddW = i.weight * (i.bdd / 100);
+                csv += `"${i.name}",${i.category},${i.weight},${i.bdd},${i.shrinkage},${((i.energy/100)*bddW).toFixed(1)},${((i.protein/100)*bddW).toFixed(1)},${((i.fat/100)*bddW).toFixed(1)},${((i.carb/100)*bddW).toFixed(1)}\n`;
+            });
+
+            csv += `\nRINGKASAN PORSI\n`;
+            csv += `Total Masakan,,-,,-,,-,${totals.energy.toFixed(1)},${totals.protein.toFixed(1)},${totals.fat.toFixed(1)},${totals.carb.toFixed(1)}\n`;
+            
+            const rL = wL / totals.cookedWeight;
+            csv += `Porsi Besar (${wL}g),,-,,-,,-,${(totals.energy*rL).toFixed(1)},${(totals.protein*rL).toFixed(1)},${(totals.fat*rL).toFixed(1)},${(totals.carb*rL).toFixed(1)}\n`;
+            
+            const rS = wS / totals.cookedWeight;
+            csv += `Porsi Kecil (${wS}g),,-,,-,,-,${(totals.energy*rS).toFixed(1)},${(totals.protein*rS).toFixed(1)},${(totals.fat*rS).toFixed(1)},${(totals.carb*rS).toFixed(1)}\n`;
+
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement("a");
+            link.href = URL.createObjectURL(blob);
+            link.download = `Analisis_Gizi_${Date.now()}.csv`;
+            link.click();
+        }
+    </script>
+</body>
+</html>

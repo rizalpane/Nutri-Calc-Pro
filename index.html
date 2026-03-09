@@ -405,8 +405,17 @@
             const totals = calculateNutrients();
             const wL = parseFloat(porsiBesarInput.value) || 0;
             const wS = parseFloat(porsiKecilInput.value) || 0;
+            const dateStr = new Date().toLocaleString('id-ID');
 
-            let csv = "LAPORAN ANALISIS GIZI RESEP (TKPI)\n\n";
+            // Karakter BOM untuk UTF-8 (mencegah karakter aneh di Excel)
+            let csv = "\uFEFF"; 
+
+            // Header Laporan
+            csv += "LAPORAN ANALISIS GIZI RESEP (TKPI)\n";
+            csv += `Dibuat pada: ${dateStr}\n\n`;
+
+            // Tabel Bahan
+            csv += "DAFTAR BAHAN BAKU\n";
             csv += "Bahan,Kategori,Berat Mentah(g),BDD(%),Penyusutan(%),Energi(kkal),Protein(g),Lemak(g),KH(g)\n";
             
             recipe.forEach(i => {
@@ -414,20 +423,34 @@
                 csv += `"${i.name}",${i.category},${i.weight},${i.bdd},${i.shrinkage},${((i.energy/100)*bddW).toFixed(1)},${((i.protein/100)*bddW).toFixed(1)},${((i.fat/100)*bddW).toFixed(1)},${((i.carb/100)*bddW).toFixed(1)}\n`;
             });
 
-            csv += `\nRINGKASAN PORSI\n`;
-            csv += `Total Masakan,,-,,-,,-,${totals.energy.toFixed(1)},${totals.protein.toFixed(1)},${totals.fat.toFixed(1)},${totals.carb.toFixed(1)}\n`;
-            
-            const rL = wL / totals.cookedWeight;
-            csv += `Porsi Besar (${wL}g),,-,,-,,-,${(totals.energy*rL).toFixed(1)},${(totals.protein*rL).toFixed(1)},${(totals.fat*rL).toFixed(1)},${(totals.carb*rL).toFixed(1)}\n`;
-            
-            const rS = wS / totals.cookedWeight;
-            csv += `Porsi Kecil (${wS}g),,-,,-,,-,${(totals.energy*rS).toFixed(1)},${(totals.protein*rS).toFixed(1)},${(totals.fat*rS).toFixed(1)},${(totals.carb*rS).toFixed(1)}\n`;
+            // Spasi Pemisah
+            csv += "\n";
 
+            // Ringkasan Porsi
+            csv += "RINGKASAN ANALISIS PORSI\n";
+            csv += "Tipe Porsi,Berat(g),Energi(kkal),Protein(g),Lemak(g),KH(g)\n";
+            
+            // Baris Total
+            csv += `Total Masakan Jadi,${totals.cookedWeight.toFixed(1)},${totals.energy.toFixed(1)},${totals.protein.toFixed(1)},${totals.fat.toFixed(1)},${totals.carb.toFixed(1)}\n`;
+            
+            // Baris Porsi Besar
+            const rL = totals.cookedWeight > 0 ? (wL / totals.cookedWeight) : 0;
+            csv += `Porsi Besar,${wL},${(totals.energy*rL).toFixed(1)},${(totals.protein*rL).toFixed(1)},${(totals.fat*rL).toFixed(1)},${(totals.carb*rL).toFixed(1)}\n`;
+            
+            // Baris Porsi Kecil
+            const rS = totals.cookedWeight > 0 ? (wS / totals.cookedWeight) : 0;
+            csv += `Porsi Kecil,${wS},${(totals.energy*rS).toFixed(1)},${(totals.protein*rS).toFixed(1)},${(totals.fat*rS).toFixed(1)},${(totals.carb*rS).toFixed(1)}\n`;
+
+            // Download Trigger
             const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
             const link = document.createElement("a");
+            const fileName = `Laporan_Gizi_${dateStr.replace(/[/:\s]/g, '-')}.csv`;
+            
             link.href = URL.createObjectURL(blob);
-            link.download = `Analisis_Gizi_${Date.now()}.csv`;
+            link.download = fileName;
+            document.body.appendChild(link);
             link.click();
+            document.body.removeChild(link);
         }
     </script>
 </body>
